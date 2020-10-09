@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: es-pv-volume
+  labels:
+    type: local
+    app: elasticsearch-logging
+spec:
+  storageClassName: manual-es
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: /apps/console-bin/run/k8s/efk

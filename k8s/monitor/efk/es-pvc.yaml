@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: es-pv-claim
+  namespace: kube-system
+  labels:
+    app: es
+spec:
+  storageClassName: manual-es
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
