@@ -1,0 +1,66 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: ofm-core
+  namespace: app
+  labels:
+    deployment: ofm-core
+spec:
+  externalIPs:
+    - 10.192.30.234
+  selector:
+    app: ofm-core-app
+  ports:
+    - name: ofm-core-port
+      protocol: TCP
+      port: 8081
+      targetPort: 8081
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 3600
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ofm-core
+  namespace: app
+  labels:
+    deployment: ofm-core
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ofm-core-app
+  template:
+    metadata:
+      labels:
+        app: ofm-core-app
+    spec:
+      initContainers:
+        - image: 10.192.30.234:5000/library/alpine-bash:v3.8
+          name: check-service-apollo-config-server-dev
+          command: ['bash', '-c', "curl --connect-timeout 2 --max-time 5 --retry 60 --retry-delay 5 --retry-max-time 300 service-apollo-config-server-dev.sre:8080"]
+
+      containers:
+      - name: ofm-core-container
+        image: 10.192.30.234:5000/library/ofm-core:1.0.310
+        resources:
+          requests:
+            cpu: "50m" 
+            memory: "512Mi"
+          limits:
+            cpu: "3000m" 
+            memory: "8192Mi"       
+        env:
+          - name: JAVA_OPTS_SPRING_BOOT
+            value: '-Denv=DEV -Dapollo.meta=http://service-apollo-config-server-dev.sre:8080'
+          - name: OFM_NACOS_RULE_ENV
+            value: 'dev'
+          - name: OFM_LOCAL_ENABLE_USE_DEFAULT_CLUSTER
+            value: 'true'
+          - name: OFM_REMOTE_SERVER_IP
+            value: '10.192.30.234'
+        ports:
+        - containerPort: 8081
+        imagePullPolicy: Always
